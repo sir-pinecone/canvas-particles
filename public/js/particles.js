@@ -250,6 +250,7 @@ FireworksEmitter = ParticleEmitter.extend({
                 minY = Math.min(minY, explosionTail[i].y);
             }
             
+	    // create a ring explosion
             var rand = Math.random() * 18 + 10;
             self.createFunc.call(self.caller, minX, minY, 300, function(p) {
                 return { 
@@ -259,6 +260,7 @@ FireworksEmitter = ParticleEmitter.extend({
                     colour: { r: Math.random() * 60 + 80, g: 0, b: Math.random() * 50 + 200 }
                 };
             });
+	    // and a normal explosion
             self.createFunc.call(self.caller, minX, minY);
             clearInterval(explosionInterval);
         }, explosionDelay);
@@ -365,7 +367,7 @@ ParticleApp.prototype.setup = function() {
         x: this.canvas.width - 10, 
         y: this.canvas.height - 10, 
         delay: 3200, 
-        numParticles: 350, 
+        numParticles: 150, 
         createFunc: this.createParticleSet
     }).start();	
 }

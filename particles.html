@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    
+    <title>Particle Mayhem</title>
+	
+    <link rel="stylesheet" type="text/css" href="./public/css/style.css") />
+
+    <script src="./public/js/libs/modernizr-2.0.6.min.js"></script>
+    <script src="./public/js/libs/jquery-1.6.2.min.js"></script>
+    <script src="./public/js/libs/underscore-1.1.7.min.js"></script>
+    <script src="./public/js/particles.js"></script>
+  <body>
+	<div id="container">
+		<canvas id="mainCanvas" width="800", height="800"></canvas>
+	</div>
+	
+	<script type="application/javascript">
+		 
+		$(document).ready(function() {
+			app = new ParticleApp('mainCanvas');
+		});
+		
+	</script>
+  </body>
+</html>
+    

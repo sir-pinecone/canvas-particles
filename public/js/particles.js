@@ -49,7 +49,6 @@ var inherits = function(parent, protoProps, staticProps) {
 
     return child;
 };
-
 /* ------------------------------------*/
   
 id = 0;
@@ -179,6 +178,7 @@ var canvasProperties = {
 // options { x, y, delay, numParticles, createFunc, modifierFunc }
 var ParticleEmitter = function(caller, options) {
     this.caller = caller;
+    console.log('options',options);
     this.options = options || {};
     this.x = options.x || Math.random() * 100;
     this.y = options.y || Math.random() * 100;
@@ -186,15 +186,15 @@ var ParticleEmitter = function(caller, options) {
     this.numParticles = options.numParticles || Math.random() * 200;
     this.createFunc = options.createFunc || function(){};
     this.modifier = options.modifierFunc || function(){};
-
-    this.initialize.apply(this, arguments);
+console.log('p this', this);
+    this.initialize.call(this, options);
 };
 
 _.extend(ParticleEmitter.prototype, {
     intervalId: null,
     name: 'bob',
 
-    initialize: function() {},
+    initialize: function(options) {},
     
     start: function() {
         var self = this;
@@ -213,15 +213,8 @@ ParticleEmitter.extend = extend;
 
 FireworksEmitter = ParticleEmitter.extend({
     initialize: function(options) {
-        this.tailModifier = options.tailModifier || this.defaultTailModifier;
-    },
-    
-    defaultTailModifier: function(particle) { 
-        return { 
-            xVel: Math.sin(particle.id) * 20, 
-            yVel: Math.sin(particle.id) * 20, 
-            life: particle.life *= 1.4
-        };
+        this.tailModifier = options.tailModifier || Modifiers.tail(20);
+        this.energy = options.energy;
     },
 
     start: function() {
@@ -250,18 +243,14 @@ FireworksEmitter = ParticleEmitter.extend({
                 minY = Math.min(minY, explosionTail[i].y);
             }
             
-	    // create a ring explosion
+            // create a ring explosion
             var rand = Math.random() * 18 + 10;
-            self.createFunc.call(self.caller, minX, minY, 300, function(p) {
-                return { 
-                    xVel: Math.cos(p.id) * rand,
-                    yVel: Math.sin(p.id) * rand,
-                    life: p.life *= .6,
-                    colour: { r: Math.random() * 60 + 80, g: 0, b: Math.random() * 50 + 200 }
-                };
-            });
-	    // and a normal explosion
-            self.createFunc.call(self.caller, minX, minY);
+            self.createFunc.call(self.caller, minX, minY, 300, Modifiers.ring(rand, 0.6, { r: Math.random() * 60 + 80,  g: 0,  b: Math.random() * 50 + 200 }));
+            
+            // and a normal explosion
+            console.log(self.energy);
+            self.createFunc.call(self.caller, minX, minY, Modifiers.explosion(self.energy));
+            
             clearInterval(explosionInterval);
         }, explosionDelay);
     }
@@ -270,15 +259,14 @@ FireworksEmitter = ParticleEmitter.extend({
 // ----------------------------------------------
 function ParticleApp(canvasId, options) {
     this.options = options || {};
+    this.particles = {};
     
     this.canvasId = canvasId;
     this.canvas = null;
     this.ctx = null;
-
+    
     this.lastTime;
     this.isMouseDown = false;
-    
-    this.particles = {};
     
     this.initialize();
 }
@@ -287,12 +275,10 @@ ParticleApp.prototype.initialize = function() {
     this.canvas = document.getElementById(this.canvasId);
     this.canvas.width = $(document).width();
     this.canvas.height = $(document).height();
-    // set the global properties
     canvasProperties.width = this.canvas.width;
     canvasProperties.height = this.canvas.height;
     
     this.setHandlers();
-    
 
     if (this.canvas.getContext) {
         this.ctx = this.canvas.getContext("2d");
@@ -307,6 +293,44 @@ ParticleApp.prototype.setHandlers = function() {
     var self = this;
     document.onmouseup = function() { self.onMouseUp() };
 }
+
+var Modifiers = {
+    ring: function(energy, life, colour) { 
+        if (typeof life == 'object') {
+            colour = life;
+            life = undefined;
+        }
+        energy = energy || 15;
+        return function(p) {
+            return {
+                xVel: Math.cos(p.id) * energy,
+                yVel: Math.sin(p.id) * energy,
+                life: p.life *= (life || 0.6),
+                colour: colour
+            }
+        }
+    }, 
+    explosion: function(energy, colour) {
+        return function(p) {
+            energy = energy || 20;
+            return {
+                xVel: Math.cos(p.id) * Math.random() * energy,
+                yVel: Math.sin(p.id) * Math.random() * energy,
+                colour: colour
+            }
+        }
+    },
+    tail: function(energy, life) {
+        energy = energy || 15;
+        return function(p) { 
+            return { 
+                xVel: Math.sin(p.id) * energy, 
+                yVel: Math.sin(p.id) * energy, 
+                life: p.life *= (life || 1.4)
+            };
+        }
+    }
+};
 
 ParticleApp.prototype.onMouseUp = function(e) {
     var ev = e ? e : window.event;
@@ -328,21 +352,10 @@ ParticleApp.prototype.onMouseUp = function(e) {
     var mod = null;
     if (type % 2 == 0) {
         // ring explosion
-        mod = function(p) {
-            return { 
-                xVel: Math.cos(p.id) * rand * 2,
-                yVel: Math.sin(p.id) * rand * 2,
-                life: p.life *= .6,
-                colour: colour
-            };
-        };
+        mod = Modifiers.ring(rand, colour);
     }
     else {
-        mod = function(p) {
-            return { 
-                colour: colour
-            };
-        };
+        mod = Modifiers.explosion(20, colour);
     }
 
     self.createParticleSet(ev.clientX, ev.clientY, Math.random() * 900 + 10, mod);
@@ -368,6 +381,7 @@ ParticleApp.prototype.setup = function() {
         y: this.canvas.height - 10, 
         delay: 3200, 
         numParticles: 150, 
+        energy: 24,
         createFunc: this.createParticleSet
     }).start();	
 }
@@ -426,6 +440,7 @@ ParticleApp.prototype.createParticleSet = function(x, y, numParticles, modifierF
 }
 
 ParticleApp.prototype.createParticle = function(x, y, modifierFunc) {
+    
     var m = new Particle();
     m.x  = x || this.canvas.width * .5;
     m.y  = y || this.canvas.height * .5;
@@ -440,8 +455,10 @@ ParticleApp.prototype.createParticle = function(x, y, modifierFunc) {
         attrs = modifierFunc(m);
     }
     
-    if (typeof attrs.xVel == 'undefined') attrs.xVel = Math.cos(m.id) * Math.random() * 20;
-    if (typeof attrs.yVel == 'undefined') attrs.yVel = Math.sin(m.id) * Math.random() * 20;
+    console.log('mod func', modifierFunc, 'attrs', attrs);
+    
+    if (typeof attrs.xVel == 'undefined') attrs.xVel = Math.random() * 4;
+    if (typeof attrs.yVel == 'undefined') attrs.yVel = Math.random() * 4;
     
     m.vX = attrs.xVel;
     m.vY = attrs.yVel;

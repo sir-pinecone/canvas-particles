@@ -178,7 +178,6 @@ var canvasProperties = {
 // options { x, y, delay, numParticles, createFunc, modifierFunc }
 var ParticleEmitter = function(caller, options) {
     this.caller = caller;
-    console.log('options',options);
     this.options = options || {};
     this.x = options.x || Math.random() * 100;
     this.y = options.y || Math.random() * 100;
@@ -186,7 +185,6 @@ var ParticleEmitter = function(caller, options) {
     this.numParticles = options.numParticles || Math.random() * 200;
     this.createFunc = options.createFunc || function(){};
     this.modifier = options.modifierFunc || function(){};
-console.log('p this', this);
     this.initialize.call(this, options);
 };
 
@@ -248,7 +246,6 @@ FireworksEmitter = ParticleEmitter.extend({
             self.createFunc.call(self.caller, minX, minY, 300, Modifiers.ring(rand, 0.6, { r: Math.random() * 60 + 80,  g: 0,  b: Math.random() * 50 + 200 }));
             
             // and a normal explosion
-            console.log(self.energy);
             self.createFunc.call(self.caller, minX, minY, Modifiers.explosion(self.energy));
             
             clearInterval(explosionInterval);
@@ -454,8 +451,6 @@ ParticleApp.prototype.createParticle = function(x, y, modifierFunc) {
     if (modifierFunc) {
         attrs = modifierFunc(m);
     }
-    
-    console.log('mod func', modifierFunc, 'attrs', attrs);
     
     if (typeof attrs.xVel == 'undefined') attrs.xVel = Math.random() * 4;
     if (typeof attrs.yVel == 'undefined') attrs.yVel = Math.random() * 4;

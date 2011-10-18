@@ -2,7 +2,7 @@ Canvas Particles
 ================
 It's a simple system for creating particle effects in an HTML5 Canvas.
 
-Open up the particles.html file to see an example. 
+Open up the particles.html file to see an example or go to the site posted in the project description. Clicking on the canvas will create an explosion.
 
 Browser Support
 ===============
